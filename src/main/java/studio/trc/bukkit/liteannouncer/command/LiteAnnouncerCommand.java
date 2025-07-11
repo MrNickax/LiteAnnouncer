@@ -23,6 +23,7 @@ import studio.trc.bukkit.liteannouncer.util.tools.Announcement;
 public class LiteAnnouncerCommand
     implements CommandExecutor, TabCompleter
 {
+    @SuppressWarnings("DuplicatedCode")
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("la") || command.getName().equalsIgnoreCase("liteannouncer")) {
@@ -125,42 +126,67 @@ public class LiteAnnouncerCommand
                         MessageUtil.sendCommandMessage(sender, "Switch.Switch-Off", placeholders);
                     }
                 } else if (args[0].equalsIgnoreCase("ignore")) {
-                    if (!PluginControl.hasPermission(sender, "Permissions.Commands.Ignore")) {
-                        MessageUtil.sendMessage(sender, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "No-Permission");
-                        return true;
-                    }
                     if (args.length < 3) {
-                        MessageUtil.sendCommandMessage(sender, "Ignore.Help");
+                        if (sender instanceof Player player) {
+                            Announcement announcement = PluginControl.getAnnouncementsByPriority().stream().filter(announcement_ -> announcement_.getName().equalsIgnoreCase(args[1])).findFirst().orElse(null);
+                            Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
+                            if (announcement == null) {
+                                placeholders.put("{announcement}", args[1]);
+                                MessageUtil.sendCommandMessage(sender, "Ignore.Not-Found", placeholders);
+                                return true;
+                            }
+                            placeholders.put("{announcement}", announcement.getName());
+                            FileConfiguration data = ConfigurationUtil.getFileConfiguration(ConfigurationType.PLAYER_DATA);
+                            List<String> list = data.get("PlayerData." + player.getUniqueId() + ".Ignored-Announcements") != null ? data.getStringList("PlayerData." + player.getUniqueId() + ".Ignored-Announcements") : new ArrayList();
+                            data.set("PlayerData." + player.getUniqueId() + ".Name", player.getName());
+                            if (list.contains(announcement.getName())) {
+                                list.remove(announcement.getName());
+                                data.set("PlayerData." + player.getUniqueId() + ".Ignored-Announcements", list);
+                                ConfigurationUtil.getConfig(ConfigurationType.PLAYER_DATA).saveConfig();
+                                MessageUtil.sendCommandMessage(sender, "Ignore.Ignore-On", placeholders);
+                            } else {
+                                list.add(announcement.getName());
+                                data.set("PlayerData." + player.getUniqueId() + ".Ignored-Announcements", list);
+                                ConfigurationUtil.getConfig(ConfigurationType.PLAYER_DATA).saveConfig();
+                                MessageUtil.sendCommandMessage(sender, "Ignore.Ignore-Off", placeholders);
+                            }
+                        }
                         return true;
-                    }
-                    Player player = Bukkit.getPlayer(args[2]);
-                    Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
-                    if (player == null) {
-                        placeholders.put("{player}", args[2]);
-                        MessageUtil.sendMessage(sender, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Player-Not-Exist", placeholders);
-                        return true;
-                    }
-                    placeholders.put("{player}", player.getName());
-                    Announcement announcement = PluginControl.getAnnouncementsByPriority().stream().filter(announcement_ -> announcement_.getName().equalsIgnoreCase(args[1])).findFirst().orElse(null);
-                    if (announcement == null) {
-                        placeholders.put("{announcement}", args[1]);
-                        MessageUtil.sendCommandMessage(sender, "Ignore.Not-Found", placeholders);
-                        return true;
-                    }
-                    placeholders.put("{announcement}", announcement.getName());
-                    FileConfiguration data = ConfigurationUtil.getFileConfiguration(ConfigurationType.PLAYER_DATA);
-                    List<String> list = data.get("PlayerData." + player.getUniqueId() + ".Ignored-Announcements") != null ? data.getStringList("PlayerData." + player.getUniqueId() + ".Ignored-Announcements") : new ArrayList();
-                    data.set("PlayerData." + player.getUniqueId() + ".Name", player.getName());
-                    if (list.contains(announcement.getName())) {
-                        list.remove(announcement.getName());
-                        data.set("PlayerData." + player.getUniqueId() + ".Ignored-Announcements", list);
-                        ConfigurationUtil.getConfig(ConfigurationType.PLAYER_DATA).saveConfig();
-                        MessageUtil.sendCommandMessage(sender, "Ignore.Ignore-On", placeholders);
                     } else {
-                        list.add(announcement.getName());
-                        data.set("PlayerData." + player.getUniqueId() + ".Ignored-Announcements", list);
-                        ConfigurationUtil.getConfig(ConfigurationType.PLAYER_DATA).saveConfig();
-                        MessageUtil.sendCommandMessage(sender, "Ignore.Ignore-Off", placeholders);
+                        if (!PluginControl.hasPermission(sender, "Permissions.Commands.Ignore")) {
+                            MessageUtil.sendMessage(sender, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "No-Permission");
+                            return true;
+                        }
+
+                        Player player = Bukkit.getPlayer(args[2]);
+                        Map<String, String> placeholders = MessageUtil.getDefaultPlaceholders();
+                        if (player == null) {
+                            placeholders.put("{player}", args[2]);
+                            MessageUtil.sendMessage(sender, ConfigurationUtil.getConfig(ConfigurationType.MESSAGES), "Player-Not-Exist", placeholders);
+                            return true;
+                        }
+                        placeholders.put("{player}", player.getName());
+                        Announcement announcement = PluginControl.getAnnouncementsByPriority().stream().filter(announcement_ -> announcement_.getName().equalsIgnoreCase(args[1])).findFirst().orElse(null);
+                        if (announcement == null) {
+                            placeholders.put("{announcement}", args[1]);
+                            MessageUtil.sendCommandMessage(sender, "Ignore.Not-Found", placeholders);
+                            return true;
+                        }
+                        placeholders.put("{announcement}", announcement.getName());
+                        FileConfiguration data = ConfigurationUtil.getFileConfiguration(ConfigurationType.PLAYER_DATA);
+                        List<String> list = data.get("PlayerData." + player.getUniqueId() + ".Ignored-Announcements") != null ? data.getStringList("PlayerData." + player.getUniqueId() + ".Ignored-Announcements") : new ArrayList();
+                        data.set("PlayerData." + player.getUniqueId() + ".Name", player.getName());
+                        if (list.contains(announcement.getName())) {
+                            list.remove(announcement.getName());
+                            data.set("PlayerData." + player.getUniqueId() + ".Ignored-Announcements", list);
+                            ConfigurationUtil.getConfig(ConfigurationType.PLAYER_DATA).saveConfig();
+                            MessageUtil.sendCommandMessage(sender, "Ignore.Ignore-On", placeholders);
+                        } else {
+                            list.add(announcement.getName());
+                            data.set("PlayerData." + player.getUniqueId() + ".Ignored-Announcements", list);
+                            ConfigurationUtil.getConfig(ConfigurationType.PLAYER_DATA).saveConfig();
+                            MessageUtil.sendCommandMessage(sender, "Ignore.Ignore-Off", placeholders);
+                        }
                     }
                 } else {
                     MessageUtil.sendCommandMessage(sender, "Unknown-Command");
